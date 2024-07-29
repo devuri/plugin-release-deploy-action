@@ -1,34 +1,36 @@
 # Plugin Release Deploy Action
 
-This GitHub Action facilitates the release and deployment of WordPress plugins using PHP and Node. It combines the necessary steps to automate the process from release creation to deployment on WordPress.org.
+This GitHub Action helps you release and deploy WordPress plugins using PHP and Node. It automates the entire process, from creating a release to deploying the plugin on WordPress.org.
 
 ## Description
 
-This composite action performs the following tasks:
-1. Runs `release-please` to manage release tagging and changelog generation.
-2. Checks out the repository code.
+This action does the following:
+1. Creates a new release and generates a changelog.
+2. Checks out your repository code.
 3. Sets up the specified PHP and Node.js environments.
-4. Installs PHP and Node.js dependencies.
-5. Builds the project artifact.
-6. Uploads the built artifact as a zip file to the GitHub release.
-7. Deploys the WordPress plugin to the WordPress.org SVN repository.
+4. Installs the required PHP and Node.js dependencies.
+5. Builds the plugin.
+6. Uploads the built plugin as a zip file to the GitHub release.
+7. Deploys the plugin to the WordPress.org SVN repository.
 
 ## Inputs
 
+These are the settings you can configure for this action:
+
 | Input Name     | Description                                                   | Required | Default |
 |----------------|---------------------------------------------------------------|----------|---------|
-| `php-version`  | PHP version to setup                                          | true     | `7.4`   |
-| `node-version` | Node version to setup                                         | true     | `16`    |
-| `plugin-slug`  | Slug for the WordPress plugin on WordPress.org                | true     |         |
-| `build-dir`    | Build directory for the WordPress plugin                      | true     |         |
-| `zip-file`     | Zip file to upload to release                                 | true     |         |
-| `svn-username` | SVN username for WordPress.org plugin deployment              | true     |         |
-| `svn-password` | SVN password for WordPress.org plugin deployment              | true     |         |
-| `dry-run`      | Flag to perform a dry run of the deployment                   | false    | `false` |
+| `php-version`  | The PHP version to set up                                     | Yes      | `7.4`   |
+| `node-version` | The Node.js version to set up                                 | Yes      | `16`    |
+| `plugin-slug`  | The slug (unique identifier) for your plugin on WordPress.org | Yes      |         |
+| `build-dir`    | The directory where your plugin is built                      | Yes      |         |
+| `zip-file`     | The name of the zip file to upload to the release             | Yes      |         |
+| `svn-username` | Your WordPress.org SVN username                               | Yes      |         |
+| `svn-password` | Your WordPress.org SVN password                               | Yes      |         |
+| `dry-run`      | If set to `true`, performs a dry run (test) of the deployment | No       | `false` |
 
 ## Usage
 
-To use this action in your repository, reference it in your workflow file as shown below:
+To use this action, you need to add it to your GitHub Actions workflow file. Here’s a sample workflow file:
 
 ```yaml
 name: 🚀 Deploy Release
@@ -43,7 +45,7 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-      - run: echo The PR was merged
+      - run: echo "The PR was merged"
   release:
     runs-on: ubuntu-latest
     steps:
@@ -60,10 +62,15 @@ jobs:
           dry-run: 'false' # This is optional and defaults to 'false'
 ```
 
+In this example:
+- Replace `'your-plugin-slug'` with the slug of your WordPress plugin.
+- Replace `'./build/trunk/'` with the directory where your plugin is built.
+- Replace `'your-plugin.zip'` with the name of the zip file to upload.
+- Add your WordPress.org SVN username and password to your repository secrets as `WP_SVN_USERNAME` and `WP_SVN_PASSWORD`.
 
 ## Example
 
-Here’s an example configuration for a plugin named `my-wordpress-plugin`:
+Here’s a complete example for a plugin named `my-wordpress-plugin`:
 
 ```yaml
 name: 🚀 Deploy Release
@@ -78,7 +85,7 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-      - run: echo The PR was merged
+      - run: echo "The PR was merged"
   release:
     runs-on: ubuntu-latest
     steps:
