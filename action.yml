@@ -24,6 +24,9 @@ inputs:
   svn-password:
     description: 'SVN password for WordPress plugin deployment'
     required: true
+  github-token:
+    description: 'GitHub token for authentication'
+    required: true
   dry-run:
     description: 'Flag to perform a dry run of the deployment'
     required: false
@@ -35,7 +38,7 @@ runs:
       uses: googleapis/release-please-action@v4
       id: release
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ inputs.github-token }}
         command: manifest
         default-branch: main
 
@@ -76,7 +79,7 @@ runs:
       uses: AButler/upload-release-assets@v2.0
       with:
         files: ${{ inputs.zip-file }}
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        repo-token: ${{ inputs.github-token }}
         release-tag: ${{ steps.release.outputs.tag_name }}
 
     - name: 🚀 Deploy WordPress Plugin
