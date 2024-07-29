@@ -18,6 +18,12 @@ inputs:
   zip-file:
     description: 'Zip file to upload to release'
     required: true
+  svn-username:
+    description: 'SVN username for WordPress plugin deployment'
+    required: true
+  svn-password:
+    description: 'SVN password for WordPress plugin deployment'
+    required: true
   dry-run:
     description: 'Flag to perform a dry run of the deployment'
     required: false
@@ -77,8 +83,8 @@ runs:
       if: ${{ steps.release.outputs.releases_created }}
       uses: 10up/action-wordpress-plugin-deploy@develop
       env:
-          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
-          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ inputs.svn-password }}
+          SVN_USERNAME: ${{ inputs.svn-username }}
           SLUG: ${{ inputs.plugin-slug }}
           BUILD_DIR: ${{ inputs.build-dir }}
           INPUT_DRY_RUN: ${{ inputs.dry-run }}
