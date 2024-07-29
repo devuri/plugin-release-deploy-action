@@ -60,6 +60,7 @@ jobs:
           zip-file: 'your-plugin.zip'
           svn-username: ${{ secrets.WP_SVN_USERNAME }}
           svn-password: ${{ secrets.WP_SVN_PASSWORD }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           dry-run: 'false' # This is optional and defaults to 'false'
 ```
 
@@ -100,7 +101,9 @@ jobs:
           zip-file: 'my-wordpress-plugin.zip'
           svn-username: ${{ secrets.WP_SVN_USERNAME }}
           svn-password: ${{ secrets.WP_SVN_PASSWORD }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           dry-run: 'false'
+
 ```
 
 ## Note
