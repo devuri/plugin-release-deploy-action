@@ -19,6 +19,7 @@ These are the settings you can configure for this action:
 
 | Input Name     | Description                                                   | Required | Default |
 |----------------|---------------------------------------------------------------|----------|---------|
+| github-token          | GitHub Token. This is provided automatically by GitHub. Use the default value ${{ secrets.GITHUB_TOKEN }}.  [More info](https://docs.github.com/en/actions/security-guides/automatic-token-authentication)  | Yes      |                                                                                                                                 |
 | `php-version`  | The PHP version to set up                                     | Yes      | `7.4`   |
 | `node-version` | The Node.js version to set up                                 | Yes      | `16`    |
 | `plugin-slug`  | The slug (unique identifier) for your plugin on WordPress.org | Yes      |         |
