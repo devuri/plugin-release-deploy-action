@@ -102,6 +102,20 @@ jobs:
           dry-run: 'false'
 ```
 
+## Note
+
+This action is an opinionated abstract of the functionalities of the [10up action](https://github.com/10up/action-wordpress-plugin-deploy) combined with Google's [release-please action](https://github.com/google-github-actions/release-please-action) for a streamlined deployment process. It may not be suitable for all use cases. For more flexibility, consider using the individual actions directly.
+> For an example plugin structure that works well with this action, refer to the [Sample Plugin](https://github.com/devuri/shortcode-options).
+
+## Assumptions
+
+This action makes several assumptions about your plugin's structure and setup:
+- **Composer Setup**: Your plugin uses Composer for PHP dependency management.
+- **NPM Setup**: Your plugin uses NPM for Node.js dependency management and build scripts.
+- **Build Directory**: The build directory (`build-dir`) contains the final plugin files ready to be deployed to WordPress.org.
+- **Zip File**: The zip file (`zip-file`) is the name of the zip file that will be uploaded to the GitHub release.
+- **SVN Access**: You have valid SVN credentials for WordPress.org stored in your repository secrets.
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
