@@ -33,76 +33,67 @@ inputs:
     required: false
     default: 'false'
 
-jobs:
-  release:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run release-please
-        uses: googleapis/release-please-action@v4
-        id: release
-        with:
-          token: ${{ inputs.github-token }}
-          command: manifest
+runs:
+  using: "composite"
+  steps:
+    - name: Run release-please
+      uses: googleapis/release-please-action@v4
+      id: release
+      with:
+        token: ${{ inputs.github-token }}
+        command: manifest
 
-      - name: Outputs
-        run: echo ${{ steps.release.outputs.releases_created }}
-        shell: bash
+    - name: Outputs
+      run: echo ${{ steps.release.outputs.releases_created }}
+      shell: bash
 
-      - name: Checkout
-        uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v3
 
-      - name: Setup PHP
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ inputs.php-version }}
-          extensions: pcov
+    - name: Setup PHP
+      if: ${{ steps.release.outputs.releases_created == 'true' }}
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ inputs.php-version }}
+        extensions: pcov
 
-      - name: Install PHP dependencies
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        uses: ramsey/composer-install@v1
-        with:
-          composer-options: '-oa --no-dev'
+    - name: Install PHP dependencies
+      if: ${{ steps.release.outputs.releases_created == 'true' }}
+      uses: ramsey/composer-install@v1
+      with:
+        composer-options: '-oa --no-dev'
 
-      - name: Install and Setup Node
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ inputs.node-version }}
+    - name: Install and Setup Node
+      if: ${{ steps.release.outputs.releases_created == 'true' }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version }}
 
-      - name: Install NPM dependencies
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: npm install
-        shell: bash
+    - name: Install NPM dependencies
+      if: ${{ steps.release.outputs.releases_created == 'true' }}
+      run: npm install
+      shell: bash
 
-      - name: Build The Artifact
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: npm run build
-        shell: bash
+    - name: Build The Artifact
+      if: ${{ steps.release.outputs.releases_created == 'true' }}
+      run: npm run build
+      shell: bash
 
-      - name: Upload zip to release
-        if: ${{ steps.release.outputs.releases_created == 'true' }}
-        uses: AButler/upload-release-assets@v2.0
-        with:
-          files: ${{ inputs.zip-file }}
-          repo-token: ${{ inputs.github-token }}
-          release-tag: ${{ steps.release.outputs.tag_name }}
+    - name: Upload zip to release
+      if: ${{ steps.release.outputs.releases_created == 'true' }}
+      uses: AButler/upload-release-assets@v2.0
+      with:
+        files: ${{ inputs.zip-file }}
+        repo-token: ${{ inputs.github-token }}
+        release-tag: ${{ steps.release.outputs.tag_name }}
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: release
-    environment:
-      name: production
-      url: https://wordpress.org
-    concurrency: staging
-    if: ${{ needs.release.outputs.releases_created == 'true' }}
-    steps:
-      - name: 🚀 Deploy to Production 🟢
-        uses: 10up/action-wordpress-plugin-deploy@develop
-        env:
-          SVN_PASSWORD: ${{ inputs.svn-password }}
-          SVN_USERNAME: ${{ inputs.svn-username }}
-          SLUG: ${{ inputs.plugin-slug }}
-          BUILD_DIR: ${{ inputs.build-dir }}
-          INPUT_DRY_RUN: ${{ inputs.dry-run }}
-          VERSION: ${{ needs.release.outputs.tag_name }}
+    - name: 🚀 Deploy to Production 🟢
+      if: ${{ steps.release.outputs.releases_created == 'true' }}
+      uses: 10up/action-wordpress-plugin-deploy@develop
+      env:
+        SVN_PASSWORD: ${{ inputs.svn-password }}
+        SVN_USERNAME: ${{ inputs.svn-username }}
+        SLUG: ${{ inputs.plugin-slug }}
+        BUILD_DIR: ${{ inputs.build-dir }}
+        INPUT_DRY_RUN: ${{ inputs.dry-run }}
+        VERSION: ${{ steps.release.outputs.tag_name }}
