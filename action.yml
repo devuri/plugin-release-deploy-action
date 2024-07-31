@@ -1,5 +1,7 @@
+
 name: '🚀 Plugin Release Deploy Action'
 description: 'Release and deploy WordPress plugins using PHP and Node.'
+
 inputs:
   php-version:
     description: 'PHP version to setup'
@@ -31,6 +33,7 @@ inputs:
     description: 'Flag to perform a dry run of the deployment'
     required: false
     default: 'false'
+
 runs:
   using: "composite"
   steps:
@@ -40,55 +43,66 @@ runs:
       with:
         token: ${{ inputs.github-token }}
         command: manifest
-        default-branch: main
+
+    - name: Outputs
+      run: echo ${{ steps.release.outputs.releases_created }}
+      shell: bash
 
     - name: Checkout
       uses: actions/checkout@v3
 
     - name: Setup PHP
-      if: ${{ steps.release.outputs.releases_created }}
+      if: ${{ steps.release.outputs.releases_created == 'true' }}
       uses: shivammathur/setup-php@v2
       with:
         php-version: ${{ inputs.php-version }}
         extensions: pcov
 
     - name: Install PHP dependencies
-      if: ${{ steps.release.outputs.releases_created }}
+      if: ${{ steps.release.outputs.releases_created == 'true' }}
       uses: ramsey/composer-install@v1
       with:
         composer-options: '-oa --no-dev'
 
     - name: Install and Setup Node
-      if: ${{ steps.release.outputs.releases_created }}
+      if: ${{ steps.release.outputs.releases_created == 'true' }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ inputs.node-version }}
 
     - name: Install NPM dependencies
-      if: ${{ steps.release.outputs.releases_created }}
+      if: ${{ steps.release.outputs.releases_created == 'true' }}
       run: npm install
       shell: bash
 
     - name: Build The Artifact
-      if: ${{ steps.release.outputs.releases_created }}
+      if: ${{ steps.release.outputs.releases_created == 'true' }}
       run: npm run build
       shell: bash
 
     - name: Upload zip to release
-      if: ${{ steps.release.outputs.releases_created }}
+      if: ${{ steps.release.outputs.releases_created == 'true' }}
       uses: AButler/upload-release-assets@v2.0
       with:
         files: ${{ inputs.zip-file }}
         repo-token: ${{ inputs.github-token }}
         release-tag: ${{ steps.release.outputs.tag_name }}
 
-    - name: 🚀 Deploy WordPress Plugin
-      if: ${{ steps.release.outputs.releases_created }}
+deploy:
+  runs-on: ubuntu-latest
+  environment:
+    name: production
+    url: https://wordpress.org
+  concurrency: staging
+  needs: release
+  if: ${{ needs.release.outputs.releases_created == 'true' }}
+  steps:
+    - name: 🚀 Deploy to Production 🟢
       uses: 10up/action-wordpress-plugin-deploy@develop
       env:
-          SVN_PASSWORD: ${{ inputs.svn-password }}
-          SVN_USERNAME: ${{ inputs.svn-username }}
-          SLUG: ${{ inputs.plugin-slug }}
-          BUILD_DIR: ${{ inputs.build-dir }}
-          INPUT_DRY_RUN: ${{ inputs.dry-run }}
-          VERSION: ${{ steps.release.outputs.tag_name }}
+        SVN_PASSWORD: ${{ inputs.svn-password }}
+        SVN_USERNAME: ${{ inputs.svn-username }}
+        SLUG: ${{ inputs.plugin-slug }}
+        BUILD_DIR: ${{ inputs.build-dir }}
+        INPUT_DRY_RUN: ${{ inputs.dry-run }}
+        VERSION: ${{ steps.release.outputs.tag_name }}
