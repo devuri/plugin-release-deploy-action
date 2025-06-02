@@ -9,7 +9,7 @@ inputs:
   node-version:
     description: 'Node version to setup'
     required: false
-    default: '16'
+    default: ''
   plugin-slug:
     description: 'Slug for the WordPress plugin'
     required: true
