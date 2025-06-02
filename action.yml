@@ -6,28 +6,36 @@ inputs:
     description: 'PHP version to setup'
     required: true
     default: '7.4'
+  
   node-version:
     description: 'Node version to setup'
-    required: true
+    required: false
     default: '16'
+  
   plugin-slug:
     description: 'Slug for the WordPress plugin'
     required: true
+  
   build-dir:
     description: 'Build directory for the WordPress plugin'
     required: true
+  
   zip-file:
     description: 'Zip file to upload to release'
     required: true
+  
   svn-username:
     description: 'SVN username for WordPress plugin deployment'
     required: true
+  
   svn-password:
     description: 'SVN password for WordPress plugin deployment'
     required: true
+  
   github-token:
     description: 'GitHub token for authentication'
     required: true
+  
   dry-run:
     description: 'Flag to perform a dry run of the deployment'
     required: false
@@ -36,6 +44,7 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # Create a new release using release-please
     - name: Run release-please
       uses: googleapis/release-please-action@v4
       id: release
@@ -43,13 +52,16 @@ runs:
         token: ${{ inputs.github-token }}
         command: manifest
 
-    - name: Outputs
-      run: echo ${{ steps.release.outputs.releases_created }}
+    - name: Show release status
+      run: echo "Release created: ${{ steps.release.outputs.releases_created }}"
       shell: bash
 
-    - name: Checkout
+    # Only run the following steps if a release was created
+    - name: Checkout repository
+      if: ${{ steps.release.outputs.releases_created == 'true' }}
       uses: actions/checkout@v3
 
+    # Setup PHP environment
     - name: Setup PHP
       if: ${{ steps.release.outputs.releases_created == 'true' }}
       uses: shivammathur/setup-php@v2
@@ -57,29 +69,38 @@ runs:
         php-version: ${{ inputs.php-version }}
         extensions: pcov
 
+    # Install and build PHP dependencies
     - name: Install PHP dependencies
       if: ${{ steps.release.outputs.releases_created == 'true' }}
       uses: ramsey/composer-install@v1
       with:
         composer-options: '-oa --no-dev'
 
-    - name: Install and Setup Node
+    - name: Build PHP dependencies
       if: ${{ steps.release.outputs.releases_created == 'true' }}
+      run: composer build
+      shell: bash
+
+    # Setup Node.js environment (only if node-version is provided)
+    - name: Setup Node.js
+      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version != '' }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ inputs.node-version }}
 
+    # Install and build Node.js dependencies
     - name: Install NPM dependencies
-      if: ${{ steps.release.outputs.releases_created == 'true' }}
+      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version != '' }}
       run: npm install
       shell: bash
 
-    - name: Build The Artifact
-      if: ${{ steps.release.outputs.releases_created == 'true' }}
+    - name: Build Node.js assets
+      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version != '' }}
       run: npm run build
       shell: bash
 
-    - name: Upload zip to release
+    # Upload the built plugin to GitHub release
+    - name: Upload plugin zip to release
       if: ${{ steps.release.outputs.releases_created == 'true' }}
       uses: AButler/upload-release-assets@v2.0
       with:
@@ -87,7 +108,8 @@ runs:
         repo-token: ${{ inputs.github-token }}
         release-tag: ${{ steps.release.outputs.tag_name }}
 
-    - name: 🚀 Deploy to Production 🟢
+    # Deploy to WordPress.org plugin repository
+    - name: 🚀 Deploy to WordPress.org
       if: ${{ steps.release.outputs.releases_created == 'true' }}
       uses: 10up/action-wordpress-plugin-deploy@develop
       env:
