@@ -83,19 +83,19 @@ runs:
 
     # Setup Node.js environment (only if node-version is provided)
     - name: Setup Node.js
-      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version != '' }}
+      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ inputs.node-version }}
 
     # Install and build Node.js dependencies
     - name: Install NPM dependencies
-      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version != '' }}
+      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version }}
       run: npm install
       shell: bash
 
     - name: Build Node.js assets
-      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version != '' }}
+      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version }}
       run: npm run build
       shell: bash
 
