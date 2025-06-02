@@ -44,7 +44,7 @@ runs:
         command: manifest
 
     - name: Show release status
-      run: echo "Release created: ${{ steps.release.outputs.releases_created }}"
+      run: echo "Release created ${{ steps.release.outputs.releases_created }}"
       shell: bash
 
     - name: Checkout repository
