@@ -1,17 +1,18 @@
 # Plugin Release Deploy Action
 
-This GitHub Action helps you release and deploy WordPress plugins using PHP and Node. It automates the entire process, from creating a release to deploying the plugin on WordPress.org.
+This GitHub Action helps you release and deploy WordPress plugins using PHP and optionally Node.js. It automates the entire process, from creating a release to deploying the plugin on WordPress.org.
 
 ## Description
 
 This action does the following:
 1. Creates a new release and generates a changelog.
 2. Checks out your repository code.
-3. Sets up the specified PHP and Node.js environments.
-4. Installs the required PHP and Node.js dependencies.
-5. Builds the plugin.
-6. Uploads the built plugin as a zip file to the GitHub release.
-7. Deploys the plugin to the WordPress.org SVN repository.
+3. Sets up the specified PHP environment.
+4. Installs the required PHP dependencies and runs composer build.
+5. Optionally sets up Node.js environment (if node-version is provided).
+6. Installs Node.js dependencies and builds assets (if Node.js is configured).
+7. Uploads the built plugin as a zip file to the GitHub release.
+8. Deploys the plugin to the WordPress.org SVN repository.
 
 ## Inputs
 
@@ -19,9 +20,9 @@ These are the settings you can configure for this action:
 
 | Input Name     | Description                                                   | Required | Default |
 |----------------|---------------------------------------------------------------|----------|---------|
-| github-token          | GitHub Token. This is provided automatically by GitHub. Use the default value ${{ secrets.GITHUB_TOKEN }}.  [More info](https://docs.github.com/en/actions/security-guides/automatic-token-authentication)  | Yes      |                                                                                                                                 |
+| `github-token` | GitHub Token. This is provided automatically by GitHub. Use the default value ${{ secrets.GITHUB_TOKEN }}.  [More info](https://docs.github.com/en/actions/security-guides/automatic-token-authentication)  | Yes      |         |
 | `php-version`  | The PHP version to set up                                     | Yes      | `7.4`   |
-| `node-version` | The Node.js version to set up                                 | Yes      | `16`    |
+| `node-version` | The Node.js version to set up (optional - leave empty to skip Node.js setup) | No      | `16`    |
 | `plugin-slug`  | The slug (unique identifier) for your plugin on WordPress.org | Yes      |         |
 | `build-dir`    | The directory where your plugin is built                      | Yes      |         |
 | `zip-file`     | The name of the zip file to upload to the release             | Yes      |         |
@@ -31,7 +32,9 @@ These are the settings you can configure for this action:
 
 ## Usage
 
-To use this action, you need to add it to your GitHub Actions workflow file. Here’s a sample workflow file:
+To use this action, you need to add it to your GitHub Actions workflow file. Here's a sample workflow file:
+
+### For plugins with both PHP and Node.js:
 
 ```yaml
 name: 🚀 Deploy Release
@@ -64,7 +67,39 @@ jobs:
           dry-run: 'false' # This is optional and defaults to 'false'
 ```
 
-In this example:
+### For PHP-only plugins (no Node.js needed):
+
+```yaml
+name: 🚀 Deploy Release
+on:
+  pull_request:
+    types:
+      - closed
+  workflow_dispatch:
+
+jobs:
+  if_merged:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "The PR was merged"
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Release
+        uses: devuri/plugin-release-deploy-action@main
+        with:
+          php-version: '7.4'
+          # node-version is omitted - Node.js setup will be skipped
+          plugin-slug: 'your-plugin-slug' # WordPress.org plugin slug
+          build-dir: './build/trunk/'
+          zip-file: 'your-plugin.zip'
+          svn-username: ${{ secrets.WP_SVN_USERNAME }}
+          svn-password: ${{ secrets.WP_SVN_PASSWORD }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+In these examples:
 - Replace `'your-plugin-slug'` with the slug of your WordPress plugin.
 - Replace `'./build/trunk/'` with the directory where your plugin is built.
 - Replace `'your-plugin.zip'` with the name of the zip file to upload.
@@ -72,7 +107,7 @@ In this example:
 
 ## Example
 
-Here’s a complete example for a plugin named `my-wordpress-plugin`:
+Here's a complete example for a plugin named `my-wordpress-plugin`:
 
 ```yaml
 name: 🚀 Deploy Release
@@ -114,8 +149,8 @@ This action is an opinionated abstract of the functionalities of the [10up actio
 ## Assumptions
 
 This action makes several assumptions about your plugin's structure and setup:
-- **Composer Setup**: Your plugin uses Composer for PHP dependency management.
-- **NPM Setup**: Your plugin uses NPM for Node.js dependency management and build scripts.
+- **Composer Setup**: Your plugin uses Composer for PHP dependency management and has a `composer build` command available.
+- **NPM Setup** (Optional): If you provide a `node-version`, your plugin uses NPM for Node.js dependency management and build scripts.
 - **Build Directory**: The build directory (`build-dir`) contains the final plugin files ready to be deployed to WordPress.org.
 - **Zip File**: The zip file (`zip-file`) is the name of the zip file that will be uploaded to the GitHub release.
 - **SVN Access**: You have valid SVN credentials for WordPress.org stored in your repository secrets.
