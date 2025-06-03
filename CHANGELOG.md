@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2](https://github.com/devuri/plugin-release-deploy-action/compare/v0.1.1...v0.1.2) (2025-06-03)
+
+
+### Bug Fixes
+
+* remove v form tagname Update action.yml ([3a9bd6a](https://github.com/devuri/plugin-release-deploy-action/commit/3a9bd6a92d54b85b89858887441874dc5c58a70c))
+* remove v form tagname Update action.yml ([bd72747](https://github.com/devuri/plugin-release-deploy-action/commit/bd727472ecc81fc1ca9963469cc153bee4492bc1))
+
 ## [0.1.1](https://github.com/devuri/plugin-release-deploy-action/compare/v0.1.0...v0.1.1) (2025-06-02)
 
 
