@@ -102,4 +102,4 @@ runs:
         SLUG: ${{ inputs.plugin-slug }}
         BUILD_DIR: ${{ inputs.build-dir }}
         INPUT_DRY_RUN: ${{ inputs.dry-run }}
-        VERSION: ${{ substring(steps.release.outputs.tag_name, 1) }}
+        VERSION: "${{ startsWith(steps.release.outputs.tag_name, 'v') && replace(steps.release.outputs.tag_name, 'v', '') || steps.release.outputs.tag_name }}"
