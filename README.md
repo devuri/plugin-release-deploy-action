@@ -25,7 +25,7 @@ This action orchestrates your complete plugin release workflow:
 | `github-token` | GitHub authentication token (typically `${{ secrets.GITHUB_TOKEN }}`) | — |
 | `php-version` | PHP version for your environment | `8.1` |
 | `build-dir` | Directory containing unpacked plugin files for WordPress.org SVN deployment (e.g., `./build/trunk/` or `./build/my-plugin/`) | — |
-| `zip-file` | Name/path of the zip file to upload to GitHub Release | — |
+| `zip-file` | File(s) to upload to GitHub Release. Supports glob patterns (e.g., `*.zip`, `my-plugin.zip;README.md`, `build/*.zip`). Paths are relative to repository root. | — |
 
 ### Optional Inputs
 
@@ -207,19 +207,67 @@ When you set `build-dir: './build/my-plugin/'`, the action deploys **the content
 
 ### `zip-file` – Package for GitHub Release
 
-The `zip-file` is the **distribution package** uploaded to your GitHub Release. This is typically created by ZipIt (or your custom build process) and represents the downloadable plugin archive.
+The `zip-file` input specifies which file(s) to upload to your GitHub Release. It uses the [AButler/upload-release-assets](https://github.com/AButler/upload-release-assets) action under the hood, which supports **glob patterns** for flexible file selection.
 
-**Example:** `my-plugin.zip`
+**Glob Pattern Support:**
+
+You can specify files using various patterns:
+
+```yaml
+# Single file by name
+zip-file: 'my-plugin.zip'
+
+# Single file with path
+zip-file: 'build/my-plugin.zip'
+
+# Wildcard pattern
+zip-file: '*.zip'
+
+# Multiple files (semicolon-separated)
+zip-file: 'my-plugin.zip;README.md;CHANGELOG.md'
+
+# Multiple glob patterns
+zip-file: 'build/*.zip;dist/*.tar.gz'
+
+# Files in subdirectory
+zip-file: 'build/trunk/*.zip'
+```
+
+**Path Resolution:**
+
+All paths are **relative to your repository root**. The glob patterns are evaluated using the `fast-glob` library, so standard glob syntax applies:
+- `*` matches any characters except `/`
+- `**` matches any characters including `/`
+- `{a,b}` matches either `a` or `b`
+
+**Common Patterns:**
+
+```yaml
+# Upload main plugin zip only
+zip-file: 'my-plugin.zip'
+
+# Upload zip from build directory
+zip-file: 'build/my-plugin.zip'
+
+# Upload all zips in repository
+zip-file: '*.zip'
+
+# Upload zip plus documentation
+zip-file: 'my-plugin.zip;README.md;LICENSE.txt'
+```
+
+**Best Practice:** Configure ZipIt's `outputFile` to create the zip in a predictable location (like repository root or a `dist/` folder), then reference it clearly in your workflow.
 
 ### Key Differences
 
 | Aspect | `build-dir` | `zip-file` |
 |--------|-------------|------------|
-| **Format** | Directory (unpacked files) | Zip archive (packaged file) |
+| **Format** | Directory (unpacked files) | File(s) or glob pattern |
 | **Used By** | 10up WordPress.org deploy action | GitHub Release upload |
 | **Required When** | Always (required input) | Always (required input) |
 | **Used When** | `deploy-to-wporg: 'true'` | Every release |
-| **Purpose** | SVN deployment source | Distribution download |
+| **Purpose** | SVN deployment source | Distribution download(s) |
+| **Supports Multiple** | No (single directory) | Yes (via glob patterns) |
 
 ### Typical Workflow
 
@@ -270,16 +318,38 @@ When `use-zipit` is `'true'`:
 
 - The `bin/zipit` executable must exist and be executable
 - A `.zipit-conf.php` file must be present (or at the path specified by `zipit-config`)
-- The `outputFile` in `.zipit-conf.php` must match the `zip-file` input
+- The `outputFile` in `.zipit-conf.php` should match your `zip-file` input
 - PHP 8.1+ is required (default `php-version` is `8.1`)
+
+**ZipIt Output Location:**
+
+ZipIt creates the zip file at the location specified by `outputFile` in your `.zipit-conf.php`:
+
+```php
+<?php
+return [
+    'baseDir' => __DIR__,
+    'files' => ['src/', 'vendor/', 'plugin.php'],
+    'exclude' => ['tests/', 'node_modules/'],
+    'outputFile' => __DIR__ . '/my-plugin.zip',  // Creates zip in repo root
+];
+```
+
+**Tip:** For simplicity, configure ZipIt to output the zip in your repository root, then use just the filename for `zip-file` input.
 
 ### Build Output
 
 **Build Directory**  
 The `build-dir` contains your unpacked plugin files ready for WordPress.org SVN deployment. When `deploy-to-wporg` is `'true'`, the 10up action syncs this directory to the WordPress.org repository's `trunk/` (and creates tags from it).
 
-**Zip File**  
-The `zip-file` is your packaged plugin archive uploaded to GitHub Releases. This file is automatically created by ZipIt when `use-zipit` is `'true'`, or by your custom build process when `use-zipit` is `'false'`. The zip file and build directory can (but don't have to) contain the same files—they serve different distribution channels.
+**Zip File(s)**  
+The `zip-file` input specifies file(s) to upload to GitHub Releases using glob patterns. Files are automatically created by ZipIt when `use-zipit` is `'true'`, or by your custom build process when `use-zipit` is `'false'`. 
+
+**Important:** 
+- All paths in `zip-file` are relative to your repository root
+- Supports glob patterns for flexibility (e.g., `*.zip`, `build/*.zip`, `plugin.zip;README.md`)
+- Configure ZipIt's `outputFile` in `.zipit-conf.php` to control where files are created
+- The uploaded file(s) and build directory serve different distribution channels (GitHub vs WordPress.org)
 
 ### WordPress.org Deployment
 
