@@ -24,8 +24,8 @@ This action orchestrates your complete plugin release workflow:
 |-------|-------------|---------|
 | `github-token` | GitHub authentication token (typically `${{ secrets.GITHUB_TOKEN }}`) | — |
 | `php-version` | PHP version for your environment | `8.1` |
-| `build-dir` | Directory containing built plugin files (e.g., `./build/trunk/`) | — |
-| `zip-file` | Name/path of the zip file to create and upload | — |
+| `build-dir` | Directory containing unpacked plugin files for WordPress.org SVN deployment (e.g., `./build/trunk/` or `./build/my-plugin/`) | — |
+| `zip-file` | Name/path of the zip file to upload to GitHub Release | — |
 
 ### Optional Inputs
 
@@ -75,7 +75,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           php-version: '8.1'
           plugin-slug: 'your-plugin-slug'
-          build-dir: './build/trunk/'
+          build-dir: './build/your-plugin-slug/'  # Can be any directory name
           zip-file: 'your-plugin.zip'
           svn-username: ${{ secrets.WP_SVN_USERNAME }}
           svn-password: ${{ secrets.WP_SVN_PASSWORD }}
@@ -179,6 +179,60 @@ jobs:
 
 ---
 
+## Understanding `build-dir` vs `zip-file`
+
+These two inputs serve different purposes in the release workflow:
+
+### `build-dir` – Source for WordPress.org SVN Deployment
+
+The `build-dir` specifies where your **unpacked plugin files** live on disk. This can be any directory path (e.g., `./build/trunk/`, `./build/my-plugin/`, or `./dist/`). This directory is passed to the [10up WordPress Plugin Deploy action](https://github.com/10up/action-wordpress-plugin-deploy), which:
+
+1. Takes the contents of `build-dir`
+2. Copies them to the WordPress.org SVN working copy's `trunk/` directory
+3. Commits and tags the release on WordPress.org
+
+**Example structure:**
+```
+./build/my-plugin/          # Your build-dir can be named anything
+├── my-plugin.php
+├── readme.txt
+├── includes/
+└── assets/
+```
+
+When you set `build-dir: './build/my-plugin/'`, the action deploys **the contents of this directory** to WordPress.org's SVN `trunk/`.
+
+### `zip-file` – Package for GitHub Release
+
+The `zip-file` is the **distribution package** uploaded to your GitHub Release. This is typically created by ZipIt (or your custom build process) and represents the downloadable plugin archive.
+
+**Example:** `my-plugin.zip`
+
+### Key Differences
+
+| Aspect | `build-dir` | `zip-file` |
+|--------|-------------|------------|
+| **Format** | Directory (unpacked files) | Zip archive (packaged file) |
+| **Used By** | 10up WordPress.org deploy action | GitHub Release upload |
+| **Required When** | `deploy-to-wporg: 'true'` | Always (for GitHub Release) |
+| **Purpose** | SVN deployment source | Distribution download |
+
+### Typical Workflow
+
+1. Your build process (Composer + optionally Node.js) creates final plugin files in a directory like `./build/my-plugin/` or `./build/trunk/`
+2. ZipIt packages those files into `my-plugin.zip` (based on `.zipit-conf.php`)
+3. The action:
+   - Uploads `my-plugin.zip` to GitHub Release (using `zip-file`)
+   - Deploys contents of your build directory to WordPress.org (using `build-dir`)
+
+**Note:** The `build-dir` name doesn't have to be "trunk"—you can use any directory structure that works for your project (e.g., `./build/my-plugin/`, `./dist/`, `./release/`).
+
+### When Not Deploying to WordPress.org
+
+If you set `deploy-to-wporg: 'false'`, the `build-dir` input becomes unused (the 10up action never runs). However, it remains a required input for consistency across different deployment scenarios.
+
+---
+
 ## Requirements
 
 ### Repository Configuration
@@ -218,10 +272,10 @@ When `use-zipit` is `'true'`:
 ### Build Output
 
 **Build Directory**  
-The `build-dir` must contain your final plugin files ready for deployment. This typically corresponds to the `trunk/` directory in WordPress.org's SVN structure.
+The `build-dir` contains your unpacked plugin files ready for WordPress.org SVN deployment. When `deploy-to-wporg` is `'true'`, the 10up action syncs this directory to the WordPress.org repository's `trunk/` (and creates tags from it).
 
 **Zip File**  
-The `zip-file` must exist before the upload step. This is automatically created by ZipIt when `use-zipit` is `'true'`, or by your custom build process when `use-zipit` is `'false'`.
+The `zip-file` is your packaged plugin archive uploaded to GitHub Releases. This file is automatically created by ZipIt when `use-zipit` is `'true'`, or by your custom build process when `use-zipit` is `'false'`. The zip file and build directory can (but don't have to) contain the same files—they serve different distribution channels.
 
 ### WordPress.org Deployment
 
