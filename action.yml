@@ -1,37 +1,63 @@
 name: '🚀 Plugin Release Deploy Action'
-description: 'Release and deploy WordPress plugins using PHP and Node.'
+description: 'Release and deploy WordPress plugins using PHP and optionally Node.'
 
 inputs:
   php-version:
     description: 'PHP version to setup'
     required: true
-    default: '7.4'
+    default: '8.1'
+
   node-version:
-    description: 'Node version to setup'
+    description: 'Node version to setup (optional, leave empty to skip)'
     required: false
     default: ''
+
   plugin-slug:
-    description: 'Slug for the WordPress plugin'
-    required: true
+    description: 'Slug for the WordPress plugin on WordPress.org (required if deploy-to-wporg is true)'
+    required: false
+    default: ''
+
   build-dir:
-    description: 'Build directory for the WordPress plugin'
+    description: 'Build directory for the WordPress plugin (e.g. ./build/trunk/)'
     required: true
+
   zip-file:
-    description: 'Zip file to upload to release'
+    description: 'Zip file to upload to release (must exist when upload step runs)'
     required: true
+
   svn-username:
-    description: 'SVN username for WordPress plugin deployment'
-    required: true
+    description: 'SVN username for WordPress plugin deployment (required if deploy-to-wporg is true)'
+    required: false
+    default: ''
+
   svn-password:
-    description: 'SVN password for WordPress plugin deployment'
-    required: true
+    description: 'SVN password for WordPress plugin deployment (required if deploy-to-wporg is true)'
+    required: false
+    default: ''
+
   github-token:
     description: 'GitHub token for authentication'
     required: true
+
   dry-run:
-    description: 'Flag to perform a dry run of the deployment'
+    description: 'Flag to perform a dry run of the deployment (true/false)'
     required: false
     default: 'false'
+
+  use-zipit:
+    description: 'Use bin/zipit to build the plugin zip before uploading'
+    required: false
+    default: 'true'
+
+  zipit-config:
+    description: 'Optional path to .zipit-conf.php (relative to repo root)'
+    required: false
+    default: '.zipit-conf.php'
+
+  deploy-to-wporg:
+    description: 'Deploy to WordPress.org SVN after creating the release'
+    required: false
+    default: 'true'
 
 runs:
   using: "composite"
@@ -70,19 +96,36 @@ runs:
       shell: bash
 
     - name: Setup Node.js
-      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version }}
+      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version != '' }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ inputs.node-version }}
 
     - name: Install NPM dependencies
-      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version }}
+      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version != '' }}
       run: npm install
       shell: bash
 
     - name: Build Node.js assets
-      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version }}
+      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version != '' }}
       run: npm run build
+      shell: bash
+
+    - name: Build plugin zip with ZipIt
+      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.use-zipit == 'true' }}
+      run: |
+        if [ ! -x "bin/zipit" ]; then
+          echo "::error::bin/zipit not found or not executable. Set use-zipit: 'false' or add ZipIt to your project."
+          exit 1
+        fi
+
+        if [ -n "${{ inputs.zipit-config }}" ] && [ -f "${{ inputs.zipit-config }}" ]; then
+          echo "Running ZipIt with config ${{ inputs.zipit-config }}"
+          bin/zipit "${{ inputs.zipit-config }}"
+        else
+          echo "Running ZipIt with default config discovery"
+          bin/zipit
+        fi
       shell: bash
 
     - name: Upload plugin zip to release
@@ -94,12 +137,12 @@ runs:
         release-tag: ${{ steps.release.outputs.tag_name }}
 
     - name: 🚀 Deploy to WordPress.org
-      if: ${{ steps.release.outputs.releases_created == 'true' }}
+      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.deploy-to-wporg == 'true' }}
       uses: 10up/action-wordpress-plugin-deploy@develop
       env:
         SVN_PASSWORD: ${{ inputs.svn-password }}
         SVN_USERNAME: ${{ inputs.svn-username }}
         SLUG: ${{ inputs.plugin-slug }}
         BUILD_DIR: ${{ inputs.build-dir }}
-        INPUT_DRY_RUN: ${{ inputs.dry-run }}
+        DRY_RUN: ${{ inputs.dry-run }}
         VERSION: ${{ steps.release.outputs.tag_name }}
