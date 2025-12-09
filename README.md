@@ -34,7 +34,7 @@ This action orchestrates your complete plugin release workflow:
 | `node-version` | Node.js version to set up (leave empty to skip Node.js) | `''` |
 | `use-zipit` | Use `bin/zipit` to build the plugin package | `'true'` |
 | `zipit-config` | Path to ZipIt configuration file | `.zipit-conf.php` |
-| `deploy-to-wporg` | Deploy the plugin to WordPress.org SVN repository | `'true'` |
+| `deploy-to-wporg` | Deploy the plugin to WordPress.org SVN repository | `'false'` |
 | `dry-run` | Test WordPress.org deployment without committing changes | `'false'` |
 
 ### WordPress.org Deployment Inputs
@@ -79,6 +79,7 @@ jobs:
           zip-file: 'your-plugin.zip'
           svn-username: ${{ secrets.WP_SVN_USERNAME }}
           svn-password: ${{ secrets.WP_SVN_PASSWORD }}
+          deploy-to-wporg: 'true'  # Enable WordPress.org deployment
 ```
 
 ### PHP + Node.js Plugin
@@ -110,6 +111,7 @@ jobs:
           zip-file: 'my-wordpress-plugin.zip'
           svn-username: ${{ secrets.WP_SVN_USERNAME }}
           svn-password: ${{ secrets.WP_SVN_PASSWORD }}
+          deploy-to-wporg: 'true'  # Enable WordPress.org deployment
 ```
 
 ### GitHub-Only Release (No WordPress.org)
@@ -137,7 +139,7 @@ jobs:
           php-version: '8.1'
           build-dir: './build/'
           zip-file: 'my-plugin.zip'
-          deploy-to-wporg: 'false'
+          # deploy-to-wporg defaults to 'false' - no WordPress.org deployment
 ```
 
 ### Custom Zip Building (Without ZipIt)
@@ -175,6 +177,7 @@ jobs:
           svn-username: ${{ secrets.WP_SVN_USERNAME }}
           svn-password: ${{ secrets.WP_SVN_PASSWORD }}
           use-zipit: 'false'
+          deploy-to-wporg: 'true'  # Enable WordPress.org deployment
 ```
 
 ---
@@ -214,7 +217,8 @@ The `zip-file` is the **distribution package** uploaded to your GitHub Release. 
 |--------|-------------|------------|
 | **Format** | Directory (unpacked files) | Zip archive (packaged file) |
 | **Used By** | 10up WordPress.org deploy action | GitHub Release upload |
-| **Required When** | `deploy-to-wporg: 'true'` | Always (for GitHub Release) |
+| **Required When** | Always (required input) | Always (required input) |
+| **Used When** | `deploy-to-wporg: 'true'` | Every release |
 | **Purpose** | SVN deployment source | Distribution download |
 
 ### Typical Workflow
@@ -229,7 +233,7 @@ The `zip-file` is the **distribution package** uploaded to your GitHub Release. 
 
 ### When Not Deploying to WordPress.org
 
-If you set `deploy-to-wporg: 'false'`, the `build-dir` input becomes unused (the 10up action never runs). However, it remains a required input for consistency across different deployment scenarios.
+By default, `deploy-to-wporg` is `'false'`, which means WordPress.org deployment is disabled unless you explicitly enable it. When WordPress.org deployment is disabled, the `build-dir` input becomes unused (the 10up action never runs). However, it remains a required input for consistency across different deployment scenarios.
 
 ---
 
