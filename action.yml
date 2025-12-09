@@ -57,7 +57,7 @@ inputs:
   deploy-to-wporg:
     description: 'Deploy to WordPress.org SVN after creating the release'
     required: false
-    default: 'true'
+    default: 'false'
 
 runs:
   using: "composite"
