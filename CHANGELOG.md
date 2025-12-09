@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/devuri/plugin-release-deploy-action/compare/v0.1.2...v0.1.3) (2025-12-09)
+
+
+### Bug Fixes
+
+* remove 'v' Update action.yml ([21ac742](https://github.com/devuri/plugin-release-deploy-action/commit/21ac7423231888e20f0d1699c89c4d136dbd0d7b))
+
 ## [0.1.2](https://github.com/devuri/plugin-release-deploy-action/compare/v0.1.1...v0.1.2) (2025-06-03)
 
 
