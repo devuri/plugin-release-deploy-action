@@ -119,13 +119,13 @@ runs:
           exit 1
         fi
 
-        if [ -n "${{ inputs.zipit-config }}" ] && [ -f "${{ inputs.zipit-config }}" ]; then
-          echo "Running ZipIt with config ${{ inputs.zipit-config }}"
-          bin/zipit "${{ inputs.zipit-config }}"
-        else
-          echo "Running ZipIt with default config discovery"
-          bin/zipit
+        if [ ! -f "${{ inputs.zipit-config }}" ]; then
+          echo "::error::ZipIt config file '${{ inputs.zipit-config }}' not found."
+          exit 1
         fi
+
+        echo "Running ZipIt (will auto-discover config at ${{ inputs.zipit-config }})"
+        bin/zipit
       shell: bash
 
     - name: Upload plugin zip to release
