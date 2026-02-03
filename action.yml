@@ -67,7 +67,7 @@ inputs:
 outputs:
   release-created:
     description: 'Whether a release was created by release-please'
-    value: ${{ steps.release.outputs.releases_created }}
+    value: ${{ steps.release.outputs.release_created }}
   tag-name:
     description: 'The release tag name (if a release was created)'
     value: ${{ steps.release.outputs.tag_name }}
@@ -80,52 +80,51 @@ runs:
       id: release
       with:
         token: ${{ inputs.github-token }}
-        command: manifest
 
     - name: Show release status
-      run: echo "Release created ${{ steps.release.outputs.releases_created }}"
+      run: echo "Release created ${{ steps.release.outputs.release_created }}"
       shell: bash
 
     - name: Checkout repository
-      if: ${{ steps.release.outputs.releases_created == 'true' }}
+      if: ${{ steps.release.outputs.release_created == 'true' }}
       uses: actions/checkout@v4
 
     - name: Setup PHP
-      if: ${{ steps.release.outputs.releases_created == 'true' }}
+      if: ${{ steps.release.outputs.release_created == 'true' }}
       uses: shivammathur/setup-php@v2
       with:
         php-version: ${{ inputs.php-version }}
         extensions: pcov
 
     - name: Install PHP dependencies
-      if: ${{ steps.release.outputs.releases_created == 'true' }}
+      if: ${{ steps.release.outputs.release_created == 'true' }}
       uses: ramsey/composer-install@v3
       with:
         composer-options: '-oa --no-dev'
 
     - name: Build PHP dependencies
-      if: ${{ steps.release.outputs.releases_created == 'true' }}
+      if: ${{ steps.release.outputs.release_created == 'true' }}
       run: composer build
       shell: bash
 
     - name: Setup Node.js
-      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version != '' }}
+      if: ${{ steps.release.outputs.release_created == 'true' && inputs.node-version != '' }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
 
     - name: Install NPM dependencies
-      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version != '' }}
+      if: ${{ steps.release.outputs.release_created == 'true' && inputs.node-version != '' }}
       run: npm install
       shell: bash
 
     - name: Build Node.js assets
-      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version != '' }}
+      if: ${{ steps.release.outputs.release_created == 'true' && inputs.node-version != '' }}
       run: npm run build
       shell: bash
 
     - name: Build plugin zip with ZipIt
-      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.use-zipit == 'true' }}
+      if: ${{ steps.release.outputs.release_created == 'true' && inputs.use-zipit == 'true' }}
       run: |
         if [ ! -x "bin/zipit" ]; then
           echo "::error::bin/zipit not found or not executable. Set use-zipit: 'false' or add ZipIt to your project."
@@ -142,7 +141,7 @@ runs:
       shell: bash
 
     - name: Upload plugin zip to release
-      if: ${{ steps.release.outputs.releases_created == 'true' }}
+      if: ${{ steps.release.outputs.release_created == 'true' }}
       uses: AButler/upload-release-assets@v3.0
       with:
         files: ${{ inputs.zip-file }}
@@ -150,13 +149,14 @@ runs:
         release-tag: ${{ steps.release.outputs.tag_name }}
 
     - name: 🚀 Deploy to WordPress.org
-      if: ${{ steps.release.outputs.releases_created == 'true' && inputs.deploy-to-wporg == 'true' }}
+      if: ${{ steps.release.outputs.release_created == 'true' && inputs.deploy-to-wporg == 'true' }}
       uses: 10up/action-wordpress-plugin-deploy@stable
+      with:
+        dry-run: ${{ inputs.dry-run }}
       env:
         SVN_PASSWORD: ${{ inputs.svn-password }}
         SVN_USERNAME: ${{ inputs.svn-username }}
         SLUG: ${{ inputs.plugin-slug }}
         BUILD_DIR: ${{ inputs.build-dir }}
         ASSETS_DIR: ${{ inputs.assets-dir }}
-        DRY_RUN: ${{ inputs.dry-run }}
         VERSION: ${{ steps.release.outputs.tag_name }}
