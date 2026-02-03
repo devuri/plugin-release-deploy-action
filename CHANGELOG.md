@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.4](https://github.com/devuri/plugin-release-deploy-action/compare/v0.1.3...v0.1.4) (2026-02-03)
+
+
+### Bug Fixes
+
+* update ASSETS_DIR action.yml ([1f6fb2b](https://github.com/devuri/plugin-release-deploy-action/commit/1f6fb2bc32255fba3af8073b32211beec84e8df5))
+* update ASSETS_DIR action.yml ([a20cc66](https://github.com/devuri/plugin-release-deploy-action/commit/a20cc66108e4a31c089e3cc81af3e33e5aac39a9))
+
 ## [0.1.3](https://github.com/devuri/plugin-release-deploy-action/compare/v0.1.2...v0.1.3) (2025-12-09)
 
 
