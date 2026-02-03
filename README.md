@@ -36,6 +36,7 @@ This action orchestrates your complete plugin release workflow:
 | `zipit-config` | Path to ZipIt configuration file | `.zipit-conf.php` |
 | `deploy-to-wporg` | Deploy the plugin to WordPress.org SVN repository | `'false'` |
 | `dry-run` | Test WordPress.org deployment without committing changes | `'false'` |
+| `assets-dir` | Directory containing WordPress.org assets (banners, icons, screenshots) | `'.wordpress-org'` |
 
 ### WordPress.org Deployment Inputs
 
@@ -46,6 +47,44 @@ Required only when `deploy-to-wporg` is `'true'`:
 | `plugin-slug` | WordPress.org plugin slug (unique identifier) |
 | `svn-username` | WordPress.org SVN username |
 | `svn-password` | WordPress.org SVN password |
+
+---
+
+## Outputs
+
+The action exposes the following outputs for use in downstream workflow steps:
+
+| Output | Description |
+|--------|-------------|
+| `release-created` | `'true'` if a release was created by release-please, `'false'` otherwise |
+| `tag-name` | The release tag name (e.g., `v1.2.3`), only set if a release was created |
+
+### Using Outputs
+
+You can reference these outputs in subsequent jobs or steps:
+
+```yaml
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.deploy.outputs.release-created }}
+      version: ${{ steps.deploy.outputs.tag-name }}
+    steps:
+      - name: Deploy Release
+        id: deploy
+        uses: devuri/plugin-release-deploy-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # ... other inputs
+
+  notify:
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Released version ${{ needs.release.outputs.version }}"
+```
 
 ---
 
@@ -180,6 +219,25 @@ jobs:
           deploy-to-wporg: 'true'  # Enable WordPress.org deployment
 ```
 
+### With Custom Assets Directory
+
+If your WordPress.org assets (banners, icons, screenshots) are in a non-standard location:
+
+```yaml
+- name: Deploy Release
+  uses: devuri/plugin-release-deploy-action@main
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    php-version: '8.1'
+    plugin-slug: 'my-plugin'
+    build-dir: './build/my-plugin/'
+    zip-file: 'my-plugin.zip'
+    assets-dir: './assets/wporg/'  # Custom location for banners/icons
+    svn-username: ${{ secrets.WP_SVN_USERNAME }}
+    svn-password: ${{ secrets.WP_SVN_PASSWORD }}
+    deploy-to-wporg: 'true'
+```
+
 ---
 
 ## Understanding `build-dir` vs `zip-file`
@@ -285,6 +343,57 @@ By default, `deploy-to-wporg` is `'false'`, which means WordPress.org deployment
 
 ---
 
+## WordPress.org Assets
+
+The `assets-dir` input specifies where your WordPress.org plugin assets are located. These assets include:
+
+- **Plugin banners** (`banner-772x250.png`, `banner-1544x500.png`)
+- **Plugin icons** (`icon-128x128.png`, `icon-256x256.png`, `icon.svg`)
+- **Screenshots** (`screenshot-1.png`, `screenshot-2.png`, etc.)
+
+By default, the action looks for these in `.wordpress-org/` at your repository root. The 10up action will automatically copy these to the SVN `assets/` directory (which is separate from `trunk/`).
+
+**Example structure:**
+```
+.wordpress-org/
+├── banner-772x250.png
+├── banner-1544x500.png
+├── icon-128x128.png
+├── icon-256x256.png
+└── screenshot-1.png
+```
+
+---
+
+## File Exclusion with `.distignore`
+
+When deploying to WordPress.org, the [10up action](https://github.com/10up/action-wordpress-plugin-deploy) supports file exclusion via `.distignore` or `.gitattributes`.
+
+**Note:** File exclusion only applies when you are **not** using `build-dir`. When `build-dir` is set, the action deploys all files in that directory and ignores `.distignore`/`.gitattributes`.
+
+If you're building your plugin files directly in the repository (without a separate build directory), you can create a `.distignore` file to exclude development files:
+
+```
+# .distignore
+/.wordpress-org
+/.git
+/.github
+/node_modules
+/tests
+
+.distignore
+.gitignore
+composer.json
+composer.lock
+package.json
+package-lock.json
+phpunit.xml
+```
+
+For most modern plugin setups with a build step, using `build-dir` is recommended as it gives you explicit control over what gets deployed.
+
+---
+
 ## Requirements
 
 ### Repository Configuration
@@ -292,7 +401,7 @@ By default, `deploy-to-wporg` is `'false'`, which means WordPress.org deployment
 **Release Please**  
 Your repository must be configured for [`release-please`](https://github.com/google-github-actions/release-please-action) with:
 - `release-please-config.json`
-- `release-please-manifest.json`
+- `.release-please-manifest.json`
 
 This action runs the release-please `manifest` command but does not configure it.
 
@@ -367,7 +476,7 @@ This action combines several tools into a streamlined workflow:
 
 - **[release-please](https://github.com/google-github-actions/release-please-action)** – Automated release creation and changelog generation
 - **[10up WordPress Plugin Deploy](https://github.com/10up/action-wordpress-plugin-deploy)** – WordPress.org SVN deployment
-- **[ZipIt](https://github.com/devuri/zipit)** – PHP-based plugin packaging tool
+- **[ZipIt](https://github.com/devuri/zipit)** – PHP-based plugin packaging tool (optional)
 
 While opinionated, this approach provides a complete solution for most WordPress plugin release workflows. For more flexibility, consider using these tools individually.
 
