@@ -59,6 +59,19 @@ inputs:
     required: false
     default: 'false'
 
+  assets-dir:
+    description: 'Directory containing WordPress.org assets (banners, icons, screenshots)'
+    required: false
+    default: '.wordpress-org'
+
+outputs:
+  release-created:
+    description: 'Whether a release was created by release-please'
+    value: ${{ steps.release.outputs.releases_created }}
+  tag-name:
+    description: 'The release tag name (if a release was created)'
+    value: ${{ steps.release.outputs.tag_name }}
+
 runs:
   using: "composite"
   steps:
@@ -75,7 +88,7 @@ runs:
 
     - name: Checkout repository
       if: ${{ steps.release.outputs.releases_created == 'true' }}
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup PHP
       if: ${{ steps.release.outputs.releases_created == 'true' }}
@@ -86,7 +99,7 @@ runs:
 
     - name: Install PHP dependencies
       if: ${{ steps.release.outputs.releases_created == 'true' }}
-      uses: ramsey/composer-install@v1
+      uses: ramsey/composer-install@v3
       with:
         composer-options: '-oa --no-dev'
 
@@ -97,7 +110,7 @@ runs:
 
     - name: Setup Node.js
       if: ${{ steps.release.outputs.releases_created == 'true' && inputs.node-version != '' }}
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
 
@@ -130,7 +143,7 @@ runs:
 
     - name: Upload plugin zip to release
       if: ${{ steps.release.outputs.releases_created == 'true' }}
-      uses: AButler/upload-release-assets@v2.0
+      uses: AButler/upload-release-assets@v3.0
       with:
         files: ${{ inputs.zip-file }}
         repo-token: ${{ inputs.github-token }}
@@ -138,11 +151,12 @@ runs:
 
     - name: 🚀 Deploy to WordPress.org
       if: ${{ steps.release.outputs.releases_created == 'true' && inputs.deploy-to-wporg == 'true' }}
-      uses: 10up/action-wordpress-plugin-deploy@develop
+      uses: 10up/action-wordpress-plugin-deploy@stable
       env:
         SVN_PASSWORD: ${{ inputs.svn-password }}
         SVN_USERNAME: ${{ inputs.svn-username }}
         SLUG: ${{ inputs.plugin-slug }}
         BUILD_DIR: ${{ inputs.build-dir }}
+        ASSETS_DIR: ${{ inputs.assets-dir }}
         DRY_RUN: ${{ inputs.dry-run }}
         VERSION: ${{ steps.release.outputs.tag_name }}
