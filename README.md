@@ -6,7 +6,7 @@ A GitHub Action that automates WordPress plugin releases and deployments using P
 
 This action orchestrates your complete plugin release workflow:
 
-1. **Release Management** – Uses [`release-please`](https://github.com/google-github-actions/release-please-action) to create GitHub releases with automated changelogs
+1. **Release Management** – Uses [`release-please`](https://github.com/googleapis/release-please-action) to create GitHub releases with automated changelogs
 2. **Environment Setup** – Configures PHP and optionally Node.js environments
 3. **Dependency Management** – Installs and builds PHP dependencies via Composer
 4. **Asset Building** – Optionally builds frontend assets with Node.js
@@ -399,7 +399,7 @@ For most modern plugin setups with a build step, using `build-dir` is recommende
 ### Repository Configuration
 
 **Release Please**  
-Your repository must be configured for [`release-please`](https://github.com/google-github-actions/release-please-action) with:
+Your repository must be configured for [`release-please`](https://github.com/googleapis/release-please-action) with:
 - `release-please-config.json`
 - `.release-please-manifest.json`
 
@@ -474,7 +474,7 @@ When deploying to WordPress.org:
 
 This action combines several tools into a streamlined workflow:
 
-- **[release-please](https://github.com/google-github-actions/release-please-action)** – Automated release creation and changelog generation
+- **[release-please](https://github.com/googleapis/release-please-action)** – Automated release creation and changelog generation
 - **[10up WordPress Plugin Deploy](https://github.com/10up/action-wordpress-plugin-deploy)** – WordPress.org SVN deployment
 - **[ZipIt](https://github.com/devuri/zipit)** – PHP-based plugin packaging tool (optional)
 
