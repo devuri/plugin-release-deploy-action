@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.5](https://github.com/devuri/plugin-release-deploy-action/compare/v0.1.4...v0.1.5) (2026-02-03)
+
+
+### Bug Fixes
+
+* Update action.yml ([3856019](https://github.com/devuri/plugin-release-deploy-action/commit/3856019f5ebb1b7921d38e75a3393255dad65a2e))
+* Update action.yml ([8e9c201](https://github.com/devuri/plugin-release-deploy-action/commit/8e9c201cdc18538ed2f628e2723db0af003edb23))
+
 ## [0.1.4](https://github.com/devuri/plugin-release-deploy-action/compare/v0.1.3...v0.1.4) (2026-02-03)
 
 
