@@ -13,6 +13,7 @@ This action orchestrates your complete plugin release workflow:
 5. **Package Creation** – Builds plugin zip files using [ZipIt](https://github.com/devuri/zipit) or custom methods
 6. **Release Distribution** – Uploads the plugin package to GitHub releases
 7. **WordPress.org Deployment** – Optionally deploys to the WordPress.org plugin repository via SVN
+8. **Release Branch Creation** – Optionally creates a branch matching the release tag after all release steps complete successfully
 
 ---
 
@@ -35,6 +36,7 @@ This action orchestrates your complete plugin release workflow:
 | `use-zipit` | Use `bin/zipit` to build the plugin package | `'true'` |
 | `zipit-config` | Path to ZipIt configuration file | `.zipit-conf.php` |
 | `deploy-to-wporg` | Deploy the plugin to WordPress.org SVN repository | `'false'` |
+| `create-release-branch` | Create a branch matching the exact release tag after all release steps complete | `'false'` |
 | `dry-run` | Test WordPress.org deployment without committing changes | `'false'` |
 | `assets-dir` | Directory containing WordPress.org assets (banners, icons, screenshots) | `'.wordpress-org'` |
 
@@ -180,6 +182,41 @@ jobs:
           zip-file: 'my-plugin.zip'
           # deploy-to-wporg defaults to 'false' - no WordPress.org deployment
 ```
+
+### GitHub Release with a Matching Branch
+
+Create a branch matching the exact release tag after the release workflow completes successfully:
+
+```yaml
+name: 🚀 Deploy Release
+
+on:
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy Release
+        uses: devuri/plugin-release-deploy-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          php-version: '8.1'
+          build-dir: './build/'
+          zip-file: 'my-plugin.zip'
+          create-release-branch: 'true'
+```
+
+The branch name exactly matches the release tag and points to the same commit. For example, a `0.2.0` tag creates a `0.2.0` branch, while a `v0.2.0` tag creates a `v0.2.0` branch.
+
+This option defaults to `'false'`. When using `${{ secrets.GITHUB_TOKEN }}`, the calling workflow must grant `contents: write`.
 
 ### Custom Zip Building (Without ZipIt)
 
