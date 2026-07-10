@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.6](https://github.com/devuri/plugin-release-deploy-action/compare/v0.1.5...v0.1.6) (2026-07-10)
+
+
+### Features
+
+* Create a branch matching the release tag after all release step… ([a23f99c](https://github.com/devuri/plugin-release-deploy-action/commit/a23f99cf81adbe82abac13b8830f6a0c07ec209c))
+* Create a branch matching the release tag after all release steps complete Update action.yml ([76f567e](https://github.com/devuri/plugin-release-deploy-action/commit/76f567ee8f2b12c5ae6220ef0b2b8f8acc7f62cd))
+
 ## [0.1.5](https://github.com/devuri/plugin-release-deploy-action/compare/v0.1.4...v0.1.5) (2026-02-03)
 
 
