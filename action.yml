@@ -59,6 +59,11 @@ inputs:
     required: false
     default: 'false'
 
+  create-release-branch:
+    description: 'Create a branch matching the release tag after all release steps complete'
+    required: false
+    default: 'false'
+
   assets-dir:
     description: 'Directory containing WordPress.org assets (banners, icons, screenshots)'
     required: false
@@ -160,3 +165,19 @@ runs:
         BUILD_DIR: ${{ inputs.build-dir }}
         ASSETS_DIR: ${{ inputs.assets-dir }}
         VERSION: ${{ steps.release.outputs.tag_name }}
+
+    - name: Create release branch
+      if: ${{ steps.release.outputs.release_created == 'true' && inputs.create-release-branch == 'true' }}
+      uses: actions/github-script@v7
+      env:
+        RELEASE_TAG: ${{ steps.release.outputs.tag_name }}
+        RELEASE_SHA: ${{ steps.release.outputs.sha }}
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          await github.rest.git.createRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: `refs/heads/${process.env.RELEASE_TAG}`,
+            sha: process.env.RELEASE_SHA,
+          });
